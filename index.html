@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>還款卡</title>
+<meta property="og:title" content="還款卡">
+<meta property="og:description" content="每月還款進度與剩餘金額">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF2EE;
+    --card:#FFFFFF;
+    --ink:#1E2B27;
+    --ink-2:#5C6B66;
+    --line:#D6DDD8;
+    --done:#1F7A55;
+    --done-bg:#E3F1E9;
+    --due:#B8791A;
+    --due-bg:#FBF1DC;
+    --late:#B2443A;
+    --late-bg:#F8E4E1;
+    --future:#C7CFCA;
+    --lineapp:#06C755;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{padding:20px 16px 56px}
+  .wrap{max-width:560px;margin:0 auto}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;margin:4px 2px 18px}
+  header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.04em}
+  header .who{font-size:13px;color:var(--ink-2)}
+
+  .cover{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 20px 18px;position:relative;overflow:hidden}
+  .cover .label{font-size:13px;color:var(--ink-2)}
+  .cover .big{font-size:44px;font-weight:900;line-height:1.1;letter-spacing:-.01em;margin:2px 0 14px;
+    font-variant-numeric:tabular-nums}
+  .cover .big small{font-size:16px;font-weight:500;margin-left:4px;color:var(--ink-2)}
+  .bar{height:12px;background:var(--paper);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;background:var(--done);width:0;transition:width .6s ease}
+  .stats{display:flex;gap:18px;margin-top:12px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+  .stats b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+  .paidoff{position:absolute;right:14px;top:14px;border:3px solid var(--done);color:var(--done);
+    padding:4px 10px;font-weight:900;font-size:18px;transform:rotate(-12deg);border-radius:6px;letter-spacing:.1em}
+
+  h2{font-size:14px;font-weight:700;color:var(--ink-2);margin:26px 2px 10px;letter-spacing:.06em}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (min-width:480px){.grid{grid-template-columns:repeat(4,1fr)}}
+  .m{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 10px 10px;
+    min-height:96px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+  .m .ym{font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .m .amt{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:6px}
+  .m .st{font-size:12px;margin-top:4px}
+  .m.done{border-color:var(--done);background:var(--done-bg)}
+  .m.done .st,.m.done .amt{color:var(--done)}
+  .m.partial{border-color:var(--due);background:var(--due-bg)}
+  .m.partial .st{color:var(--due)}
+  .m.due{border-color:var(--due);background:var(--due-bg);border-width:2px}
+  .m.due .st{color:var(--due);font-weight:700}
+  .m.late{border-color:var(--late);background:var(--late-bg)}
+  .m.late .st{color:var(--late);font-weight:700}
+  .m.future{color:var(--future);border-style:dashed}
+  .m.future .ym{color:var(--future)}
+  .m .stamp{position:absolute;right:8px;top:8px;font-size:22px;color:var(--done);opacity:.9;
+    transform:rotate(-14deg);font-weight:900}
+  .m .stamp.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
+  @keyframes pop{from{transform:scale(2.2) rotate(-14deg);opacity:0}to{transform:scale(1) rotate(-14deg);opacity:.9}}
+  .m button{margin-top:8px;width:100%;border:0;background:var(--ink);color:#fff;border-radius:7px;
+    padding:8px 0;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .m button:active{transform:translateY(1px)}
+
+  .ledger{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .row{display:grid;grid-template-columns:96px 1fr auto;gap:10px;padding:12px 14px;border-top:1px solid var(--line);
+    font-size:14px;align-items:baseline}
+  .row:first-child{border-top:0}
+  .row .d{color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .row .n{color:var(--ink-2);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .a{font-weight:700;font-variant-numeric:tabular-nums}
+  .empty{padding:22px 14px;color:var(--ink-2);font-size:14px;text-align:center}
+
+  .share-btn{margin-top:22px;width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:var(--radius);padding:13px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .foot{margin-top:14px;font-size:12px;color:var(--ink-2);display:flex;justify-content:flex-end}
+  .foot a{color:var(--ink-2)}
+
+  .mask{position:fixed;inset:0;background:rgba(30,43,39,.5);display:none;align-items:flex-end;justify-content:center;z-index:9}
+  .mask.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px 18px 28px}
+  @media (min-width:600px){.mask{align-items:center}.sheet{border-radius:14px}}
+  .sheet h3{margin:0 0 14px;font-size:17px}
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
+  .f input,.f select,.f textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:inherit;font-size:16px;
+    background:#fff;color:var(--ink)}
+  .f textarea{min-height:150px;resize:vertical;line-height:1.5}
+  .f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--done);outline-offset:1px;border-color:var(--done)}
+  .btns{display:flex;gap:10px;margin-top:6px}
+  .btns button{flex:1;border:0;border-radius:9px;padding:13px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .btn-go{background:var(--done);color:#fff}
+  .btn-go[disabled]{opacity:.5}
+  .btn-line{background:var(--lineapp);color:#fff}
+  .btn-x{background:var(--paper);color:var(--ink)}
+  .btn-alt{background:var(--paper);color:var(--ink)}
+  .err{color:var(--late);font-size:13px;min-height:18px;margin-top:6px}
+  .hint{font-size:12px;color:var(--ink-2);margin:-4px 0 10px;line-height:1.5}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:10;white-space:nowrap}
+  .toast.show{opacity:1}
+  .loading{padding:60px 0;text-align:center;color:var(--ink-2)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="loading">讀取中…</div></div>
+
+<!-- 打卡表單 -->
+<div class="mask" id="mask">
+  <div class="sheet">
+    <h3 id="sheetTitle">打卡：這個月還了</h3>
+    <div class="f"><label>還款日期</label><input type="date" id="fDate"></div>
+    <div class="f"><label>算在哪一期</label><select id="fPeriod"></select></div>
+    <div class="f"><label>金額（元）</label><input type="number" inputmode="numeric" id="fAmount" placeholder="例如 15000"></div>
+    <div class="f"><label>備註（可空）</label><input type="text" id="fNote" placeholder="例如：多還 5,000"></div>
+    <div class="f"><label>PIN</label><input type="password" inputmode="numeric" id="fPin" autocomplete="off"></div>
+    <div class="err" id="fErr"></div>
+    <div class="btns">
+      <button class="btn-x" id="btnX">取消</button>
+      <button class="btn-go" id="btnGo">送出打卡</button>
+    </div>
+  </div>
+</div>
+
+<!-- 傳給爸爸 -->
+<div class="mask" id="shareMask">
+  <div class="sheet">
+    <h3 id="shareTitle">傳給爸爸</h3>
+    <div class="f"><label>訊息內容（可以改）</label><textarea id="shareText"></textarea></div>
+    <div class="hint">網址那一行 LINE 會自動變成可以點的連結，爸爸按下去就進這個網頁。</div>
+    <div class="btns">
+      <button class="btn-line" id="btnLine">用 LINE 傳</button>
+    </div>
+    <div class="btns">
+      <button class="btn-alt" id="btnCopy">複製文字</button>
+      <button class="btn-alt" id="btnShare">其他 App</button>
+      <button class="btn-x" id="btnShareX">關閉</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════ 只需要改這一行 ═══════════ */
+const API_URL = '請貼上 Apps Script 網頁應用程式網址';
+/* ═════════════════════════════════════ */
+
+const PAGE_URL = location.origin + location.pathname;   // 傳給爸爸的網址（自動抓，不用改）
+
+const $ = s => document.querySelector(s);
+const fmt = n => Number(n).toLocaleString('zh-TW');
+let S = null, R = [], justStamped = null;
+
+function ymNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function ymdNow(){ const d=new Date(); return ymNow()+'-'+String(d.getDate()).padStart(2,'0'); }
+function addMonths(ym,n){ const [y,m]=ym.split('-').map(Number); const d=new Date(y,m-1+n,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function ymCmp(a,b){ return a<b?-1:a>b?1:0; }
+function ymDisp(ym){ return ym.replace('-','/'); }
+
+async function load(){
+  try{
+    const res = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now(), {cache:'no-store'});
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'讀取失敗');
+    S = data.settings; R = data.records;
+    render();
+  }catch(err){
+    $('#app').innerHTML = `<div class="loading">讀不到資料。<br><small>${escape(String(err.message||err))}</small><br><br>
+      <small>確認 index.html 裡的 API_URL 已換成 Apps Script 網址，且部署時「誰可以存取」選「所有人」。</small></div>`;
+  }
+}
+
+function compute(){
+  const paid = R.reduce((a,r)=>a+r.amount,0);
+  const remaining = Math.max(S.total - paid, 0);
+  const byPeriod = {};
+  R.forEach(r=>{ byPeriod[r.period]=(byPeriod[r.period]||0)+r.amount; });
+
+  const start = S.startMonth || ymNow();
+  const now = ymNow();
+  let end = ymCmp(now,start)>0 ? now : start;
+  R.forEach(r=>{ if(ymCmp(r.period,end)>0) end=r.period; });
+
+  let periods = null, finishMonth = null;
+  if(S.monthly){
+    periods = Math.ceil(S.total / S.monthly);
+    const planEnd = addMonths(start, periods-1);
+    if(ymCmp(planEnd,end)>0) end = planEnd;
+    if(remaining>0){
+      const nextUnpaid = firstUnpaid(start,end,byPeriod);
+      finishMonth = addMonths(nextUnpaid, Math.ceil(remaining/S.monthly)-1);
+    }
+  }else if(remaining>0){
+    end = addMonths(end,1);
+  }
+
+  const months=[];
+  for(let ym=start; ymCmp(ym,end)<=0; ym=addMonths(ym,1)) months.push(ym);
+  return {paid,remaining,byPeriod,months,periods,finishMonth,now};
+}
+function firstUnpaid(start,end,byPeriod){
+  for(let ym=start; ymCmp(ym,end)<=0; ym=addMonths(ym,1)){
+    if(!S.monthly ? !(byPeriod[ym]>0) : (byPeriod[ym]||0)<S.monthly) return ym;
+  }
+  return addMonths(end,1);
+}
+function status(ym,sum,now){
+  if(S.monthly ? sum>=S.monthly : sum>0) return 'done';
+  if(sum>0) return 'partial';
+  const c = ymCmp(ym,now);
+  if(c<0) return 'late';
+  if(c===0) return 'due';
+  return 'future';
+}
+
+function render(){
+  const c = compute();
+  const pct = S.total ? Math.min(100, c.paid/S.total*100) : 0;
+  const doneCount = c.months.filter(ym=>status(ym,c.byPeriod[ym]||0,c.now)==='done').length;
+
+  const grid = c.months.map(ym=>{
+    const sum = c.byPeriod[ym]||0;
+    const st = status(ym,sum,c.now);
+    const label = {done:'已還',partial:'還了一部分',late:'未還',due:'本月待還',future:'未到'}[st];
+    const stamp = st==='done' ? `<span class="stamp${justStamped===ym?' pop':''}">✓</span>` : '';
+    const amt = sum>0 ? `<div class="amt">${fmt(sum)}</div>` : (S.monthly && st!=='future' ? `<div class="amt" style="color:var(--ink-2);font-weight:500">${fmt(S.monthly)}</div>` : '<div class="amt">&nbsp;</div>');
+    const btn = (st==='due'||st==='late'||st==='partial') ? `<button data-ym="${ym}">打卡</button>` : '';
+    return `<div class="m ${st}">${stamp}<div><div class="ym">${ymDisp(ym)}</div>${amt}<div class="st">${label}</div></div>${btn}</div>`;
+  }).join('');
+
+  const ledger = R.length ? [...R].sort((a,b)=> (b.date+b.ts).localeCompare(a.date+a.ts)).map(r=>
+    `<div class="row"><span class="d">${r.date.replace(/-/g,'/')}</span><span class="n">${ymDisp(r.period)}${r.note?'　'+escape(r.note):''}</span><span class="a">${fmt(r.amount)}</span></div>`
+  ).join('') : `<div class="empty">還沒有任何一筆。第一次還款後，在上面的月份格按「打卡」。</div>`;
+
+  const stats = [
+    `已還 <b>${fmt(c.paid)}</b>`,
+    c.periods ? `<b>${doneCount}</b> / ${c.periods} 期` : `<b>${doneCount}</b> 期`,
+    c.finishMonth ? `預計 <b>${ymDisp(c.finishMonth)}</b> 還清` : '',
+    (c.remaining>0 && S.monthly) ? `每月 <b>${fmt(S.monthly)}</b>` : '',
+  ].filter(Boolean).join('<span>&nbsp;</span>');
+
+  $('#app').innerHTML = `
+    <header><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></header>
+    <section class="cover">
+      ${c.remaining===0 && S.total ? '<div class="paidoff">已還清</div>' : ''}
+      <div class="label">還欠${escape(S.lender)}</div>
+      <div class="big">${fmt(c.remaining)}<small>元</small></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="stats">${stats}<span style="margin-left:auto">總額 ${fmt(S.total)}</span></div>
+    </section>
+    <h2>每月紀錄</h2>
+    <div class="grid">${grid}</div>
+    <h2>流水帳</h2>
+    <div class="ledger">${ledger}</div>
+    <button class="share-btn" id="btnShareAny">把目前進度傳給${escape(S.lender)}</button>
+    <div class="foot"><a href="javascript:location.reload()">重新整理</a></div>`;
+
+  requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
+  document.querySelectorAll('.m button').forEach(b=> b.onclick = ()=> openSheet(b.dataset.ym, c));
+  $('#btnShareAny').onclick = ()=> openShare(null, c);
+  justStamped = null;
+}
+
+/* ── 打卡 ── */
+function openSheet(ym, c){
+  const sel = $('#fPeriod'); sel.innerHTML = '';
+  c.months.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=ymDisp(m); sel.appendChild(o); });
+  sel.value = ym;
+  $('#fDate').value = ymdNow();
+  const owed = S.monthly ? Math.max(S.monthly - (c.byPeriod[ym]||0), 0) : '';
+  $('#fAmount').value = owed || '';
+  $('#fNote').value = ''; $('#fPin').value = ''; $('#fErr').textContent = '';
+  $('#sheetTitle').textContent = `打卡：${ymDisp(ym)} 還了`;
+  $('#mask').classList.add('open');
+  setTimeout(()=> $('#fAmount').focus(), 50);
+}
+$('#btnX').onclick = ()=> $('#mask').classList.remove('open');
+$('#mask').onclick = e=>{ if(e.target.id==='mask') $('#mask').classList.remove('open'); };
+
+$('#btnGo').onclick = async ()=>{
+  const body = {
+    action:'checkin',
+    pin: $('#fPin').value.trim(),
+    date: $('#fDate').value,
+    period: $('#fPeriod').value,
+    amount: Number($('#fAmount').value),
+    note: $('#fNote').value.trim(),
+  };
+  if(!body.amount || body.amount<=0){ $('#fErr').textContent='請填金額'; return; }
+  if(!body.pin){ $('#fErr').textContent='請輸入 PIN'; return; }
+  const btn = $('#btnGo'); btn.disabled = true; btn.textContent = '送出中…'; $('#fErr').textContent='';
+  try{
+    const res = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error||'失敗');
+    R = data.records; justStamped = body.period;
+    $('#mask').classList.remove('open');
+    render();
+    toast(`已打卡 ${fmt(body.amount)} 元，剩餘 ${fmt(data.remaining)} 元`);
+    // 打卡完直接接「傳給爸爸」
+    setTimeout(()=> openShare({period: body.period, amount: body.amount}, compute()), 700);
+  }catch(err){
+    $('#fErr').textContent = String(err.message||err);
+  }finally{ btn.disabled=false; btn.textContent='送出打卡'; }
+};
+
+/* ── 傳給爸爸 ── */
+function buildMessage(just, c){
+  const lines = [];
+  if(just){
+    lines.push(`${S.lender}，${ymDisp(just.period)} 這期的 ${fmt(just.amount)} 元已經匯給你了。`);
+  }else{
+    lines.push(`${S.lender}，還款進度給你看一下。`);
+  }
+  lines.push(`目前已還 ${fmt(c.paid)} 元，剩餘 ${fmt(c.remaining)} 元。`);
+  if(c.finishMonth) lines.push(`照這樣預計 ${ymDisp(c.finishMonth)} 還清。`);
+  if(c.remaining===0) lines.push('全部還清了，謝謝你。');
+  lines.push('');
+  lines.push('每一期的紀錄都在這裡，點開就看得到：');
+  lines.push(PAGE_URL);
+  return lines.join('\n');
+}
+function openShare(just, c){
+  $('#shareTitle').textContent = `傳給${S.lender}`;
+  $('#shareText').value = buildMessage(just, c);
+  $('#btnShare').style.display = navigator.share ? '' : 'none';
+  $('#shareMask').classList.add('open');
+}
+$('#btnShareX').onclick = ()=> $('#shareMask').classList.remove('open');
+$('#shareMask').onclick = e=>{ if(e.target.id==='shareMask') $('#shareMask').classList.remove('open'); };
+
+$('#btnLine').onclick = ()=>{
+  const text = $('#shareText').value;
+  // LINE 官方分享入口：手機會開 LINE 讓你選要傳給誰，文字已經填好
+  window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank');
+};
+$('#btnShare').onclick = async ()=>{
+  try{ await navigator.share({ text: $('#shareText').value }); }catch(_){}
+};
+$('#btnCopy').onclick = async ()=>{
+  const ta = $('#shareText');
+  try{ await navigator.clipboard.writeText(ta.value); }
+  catch(_){ ta.select(); document.execCommand('copy'); }
+  toast('已複製，到 LINE 貼上就好');
+};
+
+let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),3200); }
+function escape(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+load();
+</script>
+</body>
+</html>
