@@ -42,20 +42,13 @@
   .top h1{margin:0;font-family:"Noto Serif TC",serif;font-size:26px;font-weight:900;letter-spacing:.12em;color:var(--rose-deep)}
   .top .who{font-size:13px;color:var(--ink-2);background:var(--card);border:1px solid var(--grid);padding:4px 12px;border-radius:999px}
 
-  /* ── 蕾絲邊：用遮罩把卡片上下邊緣剪成半圓鋸齒 ── */
-  .sh{filter:drop-shadow(0 8px 14px rgba(120,80,60,.14)) drop-shadow(0 1px 1px rgba(0,0,0,.05))}
-  .lace{position:relative;background:var(--card);
-    -webkit-mask:
-      radial-gradient(circle at 9px 0,transparent 6px,#000 6.6px) top/18px 12px repeat-x,
-      radial-gradient(circle at 9px 12px,transparent 6px,#000 6.6px) bottom/18px 12px repeat-x,
-      linear-gradient(#000,#000) center/100% calc(100% - 24px) no-repeat;
-    mask:
-      radial-gradient(circle at 9px 0,transparent 6px,#000 6.6px) top/18px 12px repeat-x,
-      radial-gradient(circle at 9px 12px,transparent 6px,#000 6.6px) bottom/18px 12px repeat-x,
-      linear-gradient(#000,#000) center/100% calc(100% - 24px) no-repeat;}
+  /* ── 卡片 ── */
+  .sh{margin-top:20px}
+  .sh:first-of-type{margin-top:0}
+  .lace{position:relative;background:var(--card);border-radius:16px;box-shadow:0 6px 18px rgba(120,80,60,.10),0 1px 0 rgba(0,0,0,.04)}
 
   /* ── 封面卡（淡粉底、深玫瑰字） ── */
-  .cover{padding:34px 24px 30px;color:var(--ink);background:var(--rose-soft);overflow:hidden;position:relative}
+  .cover{border-radius:16px;padding:26px 24px 24px;color:var(--ink);background:var(--rose-soft);overflow:hidden;position:relative}
   .cover .label{font-size:13px;color:var(--rose-deep);letter-spacing:.1em;font-weight:700}
   .cover .big{font-family:"Noto Serif TC",serif;font-size:54px;font-weight:900;line-height:1.05;letter-spacing:-.01em;margin:6px 0 6px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px;color:var(--rose-deep)}
   .cover .big small{font-family:"Noto Sans TC",sans-serif;font-size:16px;font-weight:500;color:var(--ink-2)}
@@ -65,17 +58,8 @@
   .barlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:8px;font-variant-numeric:tabular-nums}
   .paidoff{position:absolute;right:22px;top:26px;border:3px solid var(--rose-deep);color:var(--rose-deep);padding:5px 12px;font-weight:900;font-size:20px;transform:rotate(-10deg);border-radius:8px;letter-spacing:.14em}
 
-  /* ── 主按鈕：打卡 ── */
-  .cta{margin:24px 0 0;width:100%;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:17px;font:inherit;font-size:17px;font-weight:900;letter-spacing:.06em;cursor:pointer;
-    box-shadow:0 8px 20px rgba(43,50,56,.25);display:flex;align-items:center;justify-content:center;gap:10px}
-  .cta:active{transform:translateY(1px)}
-  .cta .dot{width:10px;height:10px;border-radius:50%;background:var(--mustard)}
-  .cta.done{background:var(--sage);box-shadow:0 8px 20px rgba(95,140,116,.3)}
-
   /* ── 戳記卡 ── */
-  .book{padding:30px 14px 26px}
-  .sh{margin-top:24px}
-  .sh:first-of-type{margin-top:0}
+  .book{padding:22px 14px 22px}
   h2{font-family:"Noto Serif TC",serif;font-size:16px;font-weight:900;color:var(--ink);margin:0 0 4px;padding:0 8px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:.06em}
   h2 small{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:12px;color:var(--ink-3);letter-spacing:0}
   .stats{display:flex;gap:8px;padding:12px 6px 18px;flex-wrap:wrap}
@@ -101,12 +85,13 @@
   .slot .amt{font-size:13px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums;min-height:18px;color:var(--ink-3)}
   .slot.done .amt{color:var(--sage)} .slot.due .amt,.slot.partial .amt{color:var(--mustard)}
   .slot button{margin-top:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:5px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .slot button.next{background:var(--ink);color:#fff;padding:6px 16px}
   .more{display:block;margin:12px auto 4px;border:1px solid var(--grid);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:7px 16px;font:inherit;font-size:12px;cursor:pointer}
   .legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 8px 0;font-size:11px;color:var(--ink-3)}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
 
   /* ── 流水帳（鼠尾草綠內頁） ── */
-  .ledgerCard{background:var(--sage-soft);padding:30px 0 26px}
+  .ledgerCard{background:var(--sage-soft);padding:22px 0 20px}
   .ledgerCard h2{padding:0 20px 8px}
   .lhead,.row{display:grid;grid-template-columns:58px 1fr 74px 80px;gap:8px;padding:10px 18px;align-items:baseline;font-variant-numeric:tabular-nums}
   .lhead{font-size:11px;color:var(--sage);border-bottom:1px dashed rgba(95,140,116,.4);padding-top:0}
@@ -278,7 +263,7 @@ function render(){
       <div class="ym">${ymDisp(ym)}</div>
       <div class="ring${st==='done'&&justStamped===ym?' pop':''}">${ringText}</div>
       <div class="amt">${amt}</div>
-      ${canPay ? `<button data-ym="${ym}">打卡</button>` : ''}
+      ${canPay ? `<button data-ym="${ym}" class="${ym===c.nextUp?'next':''}">打卡</button>` : ''}
     </div>`;
   }).join('');
 
@@ -293,8 +278,6 @@ function render(){
          <span class="a">${fmt(r.amount)}</span><span class="bal">${fmt(r.bal)}</span></div>`).join('')
     : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，按上面的「打卡」蓋第一個章。</div>`;
 
-  const ctaText = c.remaining===0 ? '全部還清了' : `${ymDisp(c.nextUp)} 這期匯好了，打卡`;
-
   $('#app').innerHTML = `
     <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
 
@@ -306,8 +289,6 @@ function render(){
       <div class="bar"><i id="bar"></i></div>
       <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
     </section></div>
-
-    <button class="cta${c.remaining===0?' done':''}" id="btnCta" ${c.remaining===0?'disabled':''}><span class="dot"></span>${ctaText}</button>
 
     <div class="sh"><section class="lace book">
       <h2>每月戳記 <small>${c.nextUp ? '下一期 '+ymDisp(c.nextUp) : ''}</small></h2>
@@ -338,7 +319,6 @@ function render(){
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
   document.querySelectorAll('.slot button').forEach(b=> b.onclick = ()=> openSheet(b.dataset.ym, c));
-  const cta = $('#btnCta'); if(cta && c.nextUp) cta.onclick = ()=> openSheet(c.nextUp, c);
   const more = $('#btnMore'); if(more) more.onclick = ()=>{ showAll = !showAll; render(); };
   $('#btnShareAny').onclick = ()=> openShare(null, c);
   justStamped = null;
