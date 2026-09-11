@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>還款卡</title>
 <meta property="og:title" content="還款卡">
-<meta property="og:description" content="每月還款進度與剩餘金額">
+<meta property="og:description" content="每月還款與剩餘金額">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -324,7 +324,7 @@ $('#btnGo').onclick = async ()=>{
 function buildMessage(just, c){
   const lines = [];
   if(just){
-    lines.push(`${S.lender}，${ymDisp(just.period)} 這期的 ${fmt(just.amount)} 元已經匯給你了。`);
+    lines.push(`${S.lender}，${ymDisp(just.period)} 這期的 ${fmt(just.amount)} 元匯給你了。`);
   }else{
     lines.push(`${S.lender}，還款進度給你看一下。`);
   }
