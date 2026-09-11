@@ -58,6 +58,13 @@
   .barlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:8px;font-variant-numeric:tabular-nums}
   .paidoff{position:absolute;right:22px;top:26px;border:3px solid var(--rose-deep);color:var(--rose-deep);padding:5px 12px;font-weight:900;font-size:20px;transform:rotate(-10deg);border-radius:8px;letter-spacing:.14em}
 
+  /* ── 主按鈕：打卡 ── */
+  .cta{margin:20px 0 0;width:100%;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:17px;font:inherit;font-size:17px;font-weight:900;letter-spacing:.06em;cursor:pointer;
+    box-shadow:0 8px 20px rgba(43,50,56,.25);display:flex;align-items:center;justify-content:center;gap:10px}
+  .cta:active{transform:translateY(1px)}
+  .cta .dot{width:10px;height:10px;border-radius:50%;background:var(--mustard)}
+  .cta.done{background:var(--sage);box-shadow:0 8px 20px rgba(95,140,116,.3)}
+
   /* ── 戳記卡 ── */
   .book{padding:22px 14px 22px}
   h2{font-family:"Noto Serif TC",serif;font-size:16px;font-weight:900;color:var(--ink);margin:0 0 4px;padding:0 8px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:.06em}
@@ -84,8 +91,6 @@
   @keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(211,155,46,.35)}50%{box-shadow:0 0 0 8px rgba(211,155,46,0)}}
   .slot .amt{font-size:13px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums;min-height:18px;color:var(--ink-3)}
   .slot.done .amt{color:var(--sage)} .slot.due .amt,.slot.partial .amt{color:var(--mustard)}
-  .slot button{margin-top:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:5px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .slot button.next{background:var(--ink);color:#fff;padding:6px 16px}
   .more{display:block;margin:12px auto 4px;border:1px solid var(--grid);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:7px 16px;font:inherit;font-size:12px;cursor:pointer}
   .legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 8px 0;font-size:11px;color:var(--ink-3)}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
@@ -256,14 +261,12 @@ function render(){
     const sum = c.byPeriod[ym]||0;
     const st = status(ym,sum,c.now);
     if(st==='future' && ym!==c.nextUp){ futureSeen++; if(!showAll && futureSeen>2){ hidden++; return ''; } }
-    const canPay = c.remaining>0 && (st==='due'||st==='partial'||(st==='future'&&ym===c.nextUp));
     const ringText = {done:'✓',partial:'半',due:'待打卡',future:'未到'}[st];
     const amt = sum>0 ? fmt(sum) : (S.monthly ? fmt(S.monthly) : '');
     return `<div class="slot ${st}">
       <div class="ym">${ymDisp(ym)}</div>
       <div class="ring${st==='done'&&justStamped===ym?' pop':''}">${ringText}</div>
       <div class="amt">${amt}</div>
-      ${canPay ? `<button data-ym="${ym}" class="${ym===c.nextUp?'next':''}">打卡</button>` : ''}
     </div>`;
   }).join('');
 
@@ -276,7 +279,9 @@ function render(){
         `<div class="row"><span class="d">${r.date.slice(5).replace('-','/')}<br><small style="color:var(--ink-3)">${r.date.slice(0,4)}</small></span>
          <span class="n">${ymDisp(r.period)}${r.note?'<br>'+escape(r.note):''}</span>
          <span class="a">${fmt(r.amount)}</span><span class="bal">${fmt(r.bal)}</span></div>`).join('')
-    : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，按上面的「打卡」蓋第一個章。</div>`;
+    : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，按上面的黑色「打卡」蓋第一個章。</div>`;
+
+  const ctaText = c.remaining===0 ? '全部還清了' : `${ymDisp(c.nextUp)} 這期匯好了，打卡`;
 
   $('#app').innerHTML = `
     <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
@@ -289,6 +294,8 @@ function render(){
       <div class="bar"><i id="bar"></i></div>
       <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
     </section></div>
+
+    <button class="cta${c.remaining===0?' done':''}" id="btnCta" ${c.remaining===0?'disabled':''}><span class="dot"></span>${ctaText}</button>
 
     <div class="sh"><section class="lace book">
       <h2>每月戳記 <small>${c.nextUp ? '下一期 '+ymDisp(c.nextUp) : ''}</small></h2>
@@ -318,7 +325,7 @@ function render(){
     <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>`;
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
-  document.querySelectorAll('.slot button').forEach(b=> b.onclick = ()=> openSheet(b.dataset.ym, c));
+  const cta = $('#btnCta'); if(cta && c.nextUp) cta.onclick = ()=> openSheet(c.nextUp, c);
   const more = $('#btnMore'); if(more) more.onclick = ()=>{ showAll = !showAll; render(); };
   $('#btnShareAny').onclick = ()=> openShare(null, c);
   justStamped = null;
