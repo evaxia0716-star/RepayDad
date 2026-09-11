@@ -6,125 +6,145 @@
 <title>還款卡</title>
 <meta property="og:title" content="還款卡">
 <meta property="og:description" content="每月還款進度與剩餘金額">
-<meta name="theme-color" content="#14503A">
+<meta name="theme-color" content="#F6EFDF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#EDF1EC;
-    --paper-line:#DCE3DB;
-    --card:#FFFFFF;
-    --ink:#182722;
-    --ink-2:#617069;
-    --ink-3:#98A59F;
-    --green-deep:#14503A;
-    --green:#1F7A55;
-    --green-soft:#DDEFE4;
-    --amber:#C8861B;
-    --amber-soft:#FBEFD6;
-    --red:#B8483C;
-    --red-soft:#F8E3E0;
+    --paper:#F6EFDF;        /* 米黃 */
+    --grid:#E6DCC4;         /* 方格線 */
+    --card:#FFFDF8;
+    --ink:#2B3238;
+    --ink-2:#6B6F72;
+    --ink-3:#A3A6A8;
+    --rose:#C9706C;         /* 玫瑰：封面、章 */
+    --rose-soft:#F3D9D6;
+    --rose-deep:#A85351;
+    --sage:#5F8C74;         /* 鼠尾草綠：已還 */
+    --sage-soft:#DCE9E0;
+    --mustard:#D39B2E;      /* 芥末：待打卡 */
+    --mustard-soft:#FBEBC8;
     --lineapp:#06C755;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--paper);color:var(--ink);
+  html,body{margin:0;color:var(--ink);
     font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;-webkit-font-smoothing:antialiased}
-  body{padding-bottom:60px}
+  body{padding:18px 14px 64px;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:18px 18px;}
+  .wrap{max-width:560px;margin:0 auto}
 
-  /* ── 封面帶 ── */
-  .band{background:linear-gradient(160deg,var(--green-deep) 0%,var(--green) 100%);color:#fff;padding:22px 0 70px;position:relative;overflow:hidden}
-  .band::before{content:"";position:absolute;inset:0;
-    background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);background-size:14px 14px;pointer-events:none}
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px;position:relative}
-  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
-  .top h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.18em;opacity:.9}
-  .top .who{font-size:13px;opacity:.8;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:999px}
-  .label{font-size:14px;opacity:.85}
-  .big{font-size:54px;font-weight:900;line-height:1.05;letter-spacing:-.02em;margin:2px 0 6px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
-  .big small{font-size:18px;font-weight:500;opacity:.8}
-  .sub{font-size:13px;opacity:.8;margin-bottom:16px}
-  .bar{height:10px;background:rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+  /* ── 標題 ── */
+  .top{display:flex;justify-content:space-between;align-items:flex-end;margin:6px 4px 14px}
+  .top h1{margin:0;font-family:"Noto Serif TC",serif;font-size:26px;font-weight:900;letter-spacing:.12em;color:var(--rose-deep)}
+  .top .who{font-size:13px;color:var(--ink-2);background:var(--card);border:1px solid var(--grid);padding:4px 12px;border-radius:999px}
+
+  /* ── 蕾絲邊：上下各一排半圓咬邊 ── */
+  .lace{position:relative;background:var(--card);border-radius:6px;
+    box-shadow:0 10px 26px rgba(120,80,60,.12),0 1px 0 rgba(0,0,0,.04)}
+  .lace::before,.lace::after{content:"";position:absolute;left:0;right:0;height:12px;
+    background-image:radial-gradient(circle at 10px 12px,var(--paper) 7px,transparent 7.5px);
+    background-size:20px 12px;background-repeat:repeat-x}
+  .lace::before{top:-1px;transform:scaleY(-1);}
+  .lace::after{bottom:-1px}
+  .lace.rose{background:var(--rose)}
+  .lace.rose::before,.lace.rose::after{background-image:radial-gradient(circle at 10px 12px,var(--paper) 7px,transparent 7.5px)}
+
+  /* ── 封面卡（玫瑰色） ── */
+  .cover{padding:30px 22px 26px;color:#fff;overflow:hidden;position:relative}
+  .cover::after{content:"";position:absolute;inset:14px;border:1.5px dashed rgba(255,255,255,.45);border-radius:4px;pointer-events:none}
+  .cover .label{font-size:13px;opacity:.9;letter-spacing:.08em}
+  .cover .big{font-size:52px;font-weight:900;line-height:1.05;letter-spacing:-.02em;margin:4px 0 4px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+  .cover .big small{font-size:17px;font-weight:500;opacity:.85}
+  .cover .sub{font-size:13px;opacity:.9;margin-bottom:16px;min-height:18px}
+  .bar{height:9px;background:rgba(255,255,255,.3);border-radius:999px;overflow:hidden}
   .bar i{display:block;height:100%;background:#fff;width:0;border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
-  .barlabel{display:flex;justify-content:space-between;font-size:12px;opacity:.85;margin-top:6px;font-variant-numeric:tabular-nums}
-  .paidoff{position:absolute;right:16px;top:70px;border:3px solid #fff;color:#fff;padding:6px 14px;font-weight:900;font-size:22px;transform:rotate(-10deg);border-radius:8px;letter-spacing:.14em;opacity:.95}
+  .barlabel{display:flex;justify-content:space-between;font-size:12px;opacity:.9;margin-top:6px;font-variant-numeric:tabular-nums}
+  .paidoff{position:absolute;right:22px;top:22px;border:3px solid #fff;color:#fff;padding:5px 12px;font-weight:900;font-size:20px;transform:rotate(-10deg);border-radius:8px;letter-spacing:.14em}
 
-  /* ── 存摺本體，疊在封面帶上 ── */
-  .book{max-width:560px;margin:-46px auto 0;padding:0 16px;position:relative}
-  .card{background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(20,80,58,.12),0 1px 2px rgba(0,0,0,.05);overflow:hidden}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--paper-line)}
-  .stats div{padding:16px 10px;text-align:center;border-right:1px solid var(--paper-line)}
-  .stats div:last-child{border-right:0}
-  .stats b{display:block;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--green-deep)}
-  .stats span{font-size:12px;color:var(--ink-2)}
+  /* ── 主按鈕：打卡 ── */
+  .cta{margin:22px 0 0;width:100%;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:17px;font:inherit;font-size:17px;font-weight:900;letter-spacing:.06em;cursor:pointer;
+    box-shadow:0 8px 20px rgba(43,50,56,.25);display:flex;align-items:center;justify-content:center;gap:10px}
+  .cta:active{transform:translateY(1px)}
+  .cta .dot{width:10px;height:10px;border-radius:50%;background:var(--mustard)}
+  .cta.done{background:var(--sage);box-shadow:0 8px 20px rgba(95,140,116,.3)}
 
-  h2{font-size:14px;font-weight:700;color:var(--ink-2);margin:0;padding:18px 20px 12px;display:flex;justify-content:space-between;align-items:baseline}
-  h2 small{font-weight:400;font-size:12px;color:var(--ink-3)}
+  /* ── 戳記卡 ── */
+  .book{margin-top:26px;padding:26px 14px 22px}
+  h2{font-family:"Noto Serif TC",serif;font-size:16px;font-weight:900;color:var(--ink);margin:0 0 4px;padding:0 8px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:.06em}
+  h2 small{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:12px;color:var(--ink-3);letter-spacing:0}
+  .stats{display:flex;gap:8px;padding:12px 6px 18px;flex-wrap:wrap}
+  .chip{flex:1;min-width:90px;background:var(--paper);border-radius:10px;padding:10px 8px;text-align:center}
+  .chip b{display:block;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+  .chip span{font-size:11px;color:var(--ink-2)}
+  .chip.sage b{color:var(--sage)} .chip.rose b{color:var(--rose-deep)} .chip.mustard b{color:var(--mustard)}
 
-  /* ── 集點戳記 ── */
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 6px;padding:0 14px 20px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 4px}
   @media (min-width:440px){.grid{grid-template-columns:repeat(4,1fr)}}
-  .slot{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 4px 6px;border-radius:12px}
+  .slot{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 2px 6px}
   .slot .ym{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-bottom:8px;font-weight:500}
-  .ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;position:relative}
-  .slot.future .ring{border:2px dashed var(--paper-line);color:var(--ink-3);font-size:12px;font-weight:500}
-  .slot.due .ring{border:3px solid var(--amber);color:var(--amber);font-size:12px;font-weight:700;background:var(--amber-soft);animation:breathe 2.2s ease-in-out infinite}
-  .slot.late .ring{border:3px solid var(--red);color:var(--red);font-size:12px;font-weight:700;background:var(--red-soft)}
-  .slot.partial .ring{border:3px solid var(--amber);color:var(--amber);background:var(--amber-soft);font-size:13px}
-  .slot.done .ring{background:var(--green);color:#fff;box-shadow:0 3px 8px rgba(31,122,85,.35);transform:rotate(-8deg)}
+  .ring{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;position:relative;
+    border:2px dashed var(--grid);color:var(--ink-3)}
+  .slot.future .ring{font-size:12px;font-weight:500}
+  .slot.due .ring{border:2.5px dashed var(--mustard);background:var(--mustard-soft);color:var(--mustard);font-size:12px;font-weight:700;animation:breathe 2.4s ease-in-out infinite}
+  .slot.partial .ring{border:2.5px dashed var(--mustard);background:var(--mustard-soft);color:var(--mustard);font-size:13px}
+  .slot.done .ring{border:0;background:var(--sage);color:#fff;transform:rotate(-8deg);
+    box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--sage),0 4px 10px rgba(95,140,116,.35)}
   .slot.done .ring.pop{animation:stamp .55s cubic-bezier(.2,1.5,.4,1) both}
   @keyframes stamp{from{transform:scale(2.4) rotate(-8deg);opacity:0}to{transform:scale(1) rotate(-8deg);opacity:1}}
-  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(200,134,27,.35)}50%{box-shadow:0 0 0 8px rgba(200,134,27,0)}}
-  .slot .amt{font-size:13px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums;min-height:18px}
-  .slot.done .amt{color:var(--green)}
-  .slot.partial .amt,.slot.due .amt{color:var(--amber)}
-  .slot.late .amt{color:var(--red)}
-  .slot.future .amt{color:var(--ink-3);font-weight:500}
-  .slot button{margin-top:6px;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:6px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .slot.future button{background:var(--ink-2)}
-  .slot button:active{transform:translateY(1px)}
-  .more{display:block;margin:-6px auto 14px;border:1px solid var(--paper-line);background:transparent;color:var(--ink-2);border-radius:999px;padding:7px 16px;font:inherit;font-size:12px;cursor:pointer}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 20px 18px;font-size:11px;color:var(--ink-3)}
+  @keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(211,155,46,.35)}50%{box-shadow:0 0 0 8px rgba(211,155,46,0)}}
+  .slot .amt{font-size:13px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums;min-height:18px;color:var(--ink-3)}
+  .slot.done .amt{color:var(--sage)} .slot.due .amt,.slot.partial .amt{color:var(--mustard)}
+  .slot button{margin-top:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:5px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .more{display:block;margin:12px auto 4px;border:1px solid var(--grid);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:7px 16px;font:inherit;font-size:12px;cursor:pointer}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 8px 0;font-size:11px;color:var(--ink-3)}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
 
-  /* ── 流水帳（存摺內頁） ── */
-  .ledger{border-top:1px solid var(--paper-line)}
-  .lhead,.row{display:grid;grid-template-columns:58px 1fr 74px 80px;gap:8px;padding:10px 16px;align-items:baseline;font-variant-numeric:tabular-nums}
-  .lhead{font-size:11px;color:var(--ink-3);border-bottom:1px solid var(--paper-line);padding-top:0}
+  /* ── 流水帳（鼠尾草綠內頁） ── */
+  .ledgerCard{margin-top:26px;background:var(--sage-soft)}
+  .ledgerCard::before,.ledgerCard::after{background-image:radial-gradient(circle at 10px 12px,var(--paper) 7px,transparent 7.5px)}
+  .ledgerCard{padding:26px 0 22px}
+  .ledgerCard h2{padding:0 20px 8px}
+  .lhead,.row{display:grid;grid-template-columns:58px 1fr 74px 80px;gap:8px;padding:10px 18px;align-items:baseline;font-variant-numeric:tabular-nums}
+  .lhead{font-size:11px;color:var(--sage);border-bottom:1px dashed rgba(95,140,116,.4);padding-top:0}
   .lhead span:nth-child(3),.lhead span:nth-child(4),.row .a,.row .bal{text-align:right}
-  .row{font-size:14px;border-bottom:1px solid var(--paper);background-image:repeating-linear-gradient(transparent 0 27px,transparent 27px)}
-  .row:nth-child(even){background:#FAFCFA}
+  .row{font-size:14px;border-bottom:1px dashed rgba(95,140,116,.25)}
+  .row:last-child{border-bottom:0}
   .row .d{color:var(--ink-2);font-size:13px}
   .row .n{color:var(--ink-2);font-size:12px;line-height:1.4;word-break:break-all}
-  .row .a{font-weight:700;color:var(--green)}
+  .row .a{font-weight:700;color:var(--sage)}
   .row .bal{color:var(--ink);font-weight:500}
-  .empty{padding:26px 20px;color:var(--ink-3);font-size:14px;text-align:center;line-height:1.6}
+  .empty{padding:22px 20px;color:var(--ink-2);font-size:14px;text-align:center;line-height:1.7}
 
   /* ── 傳給爸爸 ── */
-  .share-btn{margin:18px 0 0;width:100%;border:0;background:var(--green-deep);color:#fff;border-radius:14px;padding:16px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 18px rgba(20,80,58,.25)}
-  .share-btn svg{width:22px;height:22px}
-  .foot{margin-top:14px;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between}
+  .share-btn{margin:22px 0 0;width:100%;border:2px solid var(--rose);background:var(--card);color:var(--rose-deep);border-radius:999px;padding:14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px}
+  .share-btn svg{width:20px;height:20px}
+  .foot{margin-top:14px;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;padding:0 4px}
   .foot a{color:var(--ink-3)}
 
   /* ── 抽屜 ── */
-  .mask{position:fixed;inset:0;background:rgba(24,39,34,.55);display:none;align-items:flex-end;justify-content:center;z-index:9}
+  .mask{position:fixed;inset:0;background:rgba(43,50,56,.5);display:none;align-items:flex-end;justify-content:center;z-index:9}
   .mask.open{display:flex}
   .sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:22px 20px 30px;max-height:92vh;overflow:auto}
   @media (min-width:600px){.mask{align-items:center}.sheet{border-radius:16px}}
-  .sheet h3{margin:0 0 16px;font-size:18px;font-weight:900}
+  .sheet h3{margin:0 0 16px;font-family:"Noto Serif TC",serif;font-size:19px;font-weight:900;color:var(--rose-deep)}
   .f{margin-bottom:12px}
   .f label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
-  .f input,.f select,.f textarea{width:100%;border:1.5px solid var(--paper-line);border-radius:10px;padding:12px 13px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+  .f input,.f select,.f textarea{width:100%;border:1.5px solid var(--grid);border-radius:10px;padding:12px 13px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
   .f textarea{min-height:160px;resize:vertical;line-height:1.55}
-  .f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--green)}
+  .f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--rose)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btns{display:flex;gap:10px;margin-top:8px}
-  .btns button{flex:1;border:0;border-radius:11px;padding:14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
-  .btn-go{background:var(--green);color:#fff}
+  .btns button{flex:1;border:0;border-radius:999px;padding:14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .btn-go{background:var(--sage);color:#fff}
   .btn-go[disabled]{opacity:.5}
-  .btn-line{background:var(--lineapp);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-line{background:var(--lineapp);color:#fff}
   .btn-x,.btn-alt{background:var(--paper);color:var(--ink)}
-  .err{color:var(--red);font-size:13px;min-height:18px;margin-top:6px}
+  .err{color:var(--rose-deep);font-size:13px;min-height:18px;margin-top:6px}
   .hint{font-size:12px;color:var(--ink-3);margin:-4px 0 12px;line-height:1.5}
 
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:10;white-space:nowrap}
@@ -134,7 +154,7 @@
 </style>
 </head>
 <body>
-<div id="app"><div class="loading">讀取中…</div></div>
+<div class="wrap" id="app"><div class="loading">讀取中…</div></div>
 
 <div class="mask" id="mask">
   <div class="sheet">
@@ -149,7 +169,7 @@
     <div class="err" id="fErr"></div>
     <div class="btns">
       <button class="btn-x" id="btnX">取消</button>
-      <button class="btn-go" id="btnGo">蓋章</button>
+      <button class="btn-go" id="btnGo">蓋章打卡</button>
     </div>
   </div>
 </div>
@@ -171,7 +191,7 @@
 
 <script>
 /* ═══════════ 只需要改這一行 ═══════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxqJpP9YfEN9EXahWyMVqOilKjCB2B4DGpw1QBWknIp72zsjHDEZRc98PuKUnJqg2vkjg/exec';
+const API_URL = '請貼上 Apps Script 網頁應用程式網址';
 /* ═════════════════════════════════════ */
 
 const PAGE_URL = location.origin + location.pathname;
@@ -234,13 +254,11 @@ function firstUnpaid(start,end,byPeriod){
   }
   return addMonths(end,1);
 }
+// 日期是自己約的，所以沒有「逾期」：到了的月份沒打卡一律「待打卡」
 function status(ym,sum,now){
   if(S.monthly ? sum>=S.monthly : sum>0) return 'done';
   if(sum>0) return 'partial';
-  const c = ymCmp(ym,now);
-  if(c<0) return 'late';
-  if(c===0) return 'due';
-  return 'future';
+  return ymCmp(ym,now)<=0 ? 'due' : 'future';
 }
 
 function render(){
@@ -248,24 +266,22 @@ function render(){
   const pct = S.total ? Math.min(100, c.paid/S.total*100) : 0;
   const doneCount = c.months.filter(ym=>status(ym,c.byPeriod[ym]||0,c.now)==='done').length;
 
-  // 未到的月份只露前兩格，其餘收起來
   let futureSeen = 0, hidden = 0;
   const grid = c.months.map(ym=>{
     const sum = c.byPeriod[ym]||0;
     const st = status(ym,sum,c.now);
     if(st==='future' && ym!==c.nextUp){ futureSeen++; if(!showAll && futureSeen>2){ hidden++; return ''; } }
-    const canPay = c.remaining>0 && (st==='due'||st==='late'||st==='partial'||(st==='future'&&ym===c.nextUp));
-    const ringText = {done:'✓',partial:'半',late:'未還',due:'本月',future:'未到'}[st];
-    const amt = sum>0 ? fmt(sum) : (S.monthly && st!=='future' ? fmt(S.monthly) : (st==='future' && S.monthly ? fmt(S.monthly) : ''));
+    const canPay = c.remaining>0 && (st==='due'||st==='partial'||(st==='future'&&ym===c.nextUp));
+    const ringText = {done:'✓',partial:'半',due:'待打卡',future:'未到'}[st];
+    const amt = sum>0 ? fmt(sum) : (S.monthly ? fmt(S.monthly) : '');
     return `<div class="slot ${st}">
       <div class="ym">${ymDisp(ym)}</div>
       <div class="ring${st==='done'&&justStamped===ym?' pop':''}">${ringText}</div>
       <div class="amt">${amt}</div>
-      ${canPay ? `<button data-ym="${ym}">${st==='future'?'提前打卡':'打卡'}</button>` : ''}
+      ${canPay ? `<button data-ym="${ym}">打卡</button>` : ''}
     </div>`;
   }).join('');
 
-  // 流水帳：先照時間正序算餘額，再倒過來顯示
   const asc = [...R].sort((a,b)=> (a.date+a.ts).localeCompare(b.date+b.ts));
   let running = S.total;
   const rowsAsc = asc.map(r=>{ running -= r.amount; return {...r, bal: Math.max(running,0)}; });
@@ -275,48 +291,54 @@ function render(){
         `<div class="row"><span class="d">${r.date.slice(5).replace('-','/')}<br><small style="color:var(--ink-3)">${r.date.slice(0,4)}</small></span>
          <span class="n">${ymDisp(r.period)}${r.note?'<br>'+escape(r.note):''}</span>
          <span class="a">${fmt(r.amount)}</span><span class="bal">${fmt(r.bal)}</span></div>`).join('')
-    : `<div class="empty">還沒有任何一筆。<br>第一次還款後，在上面的月份格按「打卡」蓋第一個章。</div>`;
+    : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，按上面的「打卡」蓋第一個章。</div>`;
+
+  const ctaText = c.remaining===0 ? '全部還清了' : `${ymDisp(c.nextUp)} 這期匯好了，打卡`;
 
   $('#app').innerHTML = `
-    <div class="band">
-      <div class="wrap">
-        <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
-        ${c.remaining===0 && S.total ? '<div class="paidoff">已還清</div>' : ''}
-        <div class="label">還欠${escape(S.lender)}</div>
-        <div class="big">${fmt(c.remaining)}<small>元</small></div>
-        <div class="sub">${c.finishMonth ? `照目前進度，預計 ${ymDisp(c.finishMonth)} 還清` : (S.monthly ? '' : '每次還款後打卡，餘額會自動更新')}</div>
-        <div class="bar"><i id="bar"></i></div>
-        <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
+    <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
+
+    <section class="lace rose cover">
+      ${c.remaining===0 && S.total ? '<div class="paidoff">已還清</div>' : ''}
+      <div class="label">還欠${escape(S.lender)}</div>
+      <div class="big">${fmt(c.remaining)}<small>元</small></div>
+      <div class="sub">${c.finishMonth ? `照目前進度，預計 ${ymDisp(c.finishMonth)} 還清` : '每次匯款後打卡，餘額自動更新'}</div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
+    </section>
+
+    <button class="cta${c.remaining===0?' done':''}" id="btnCta" ${c.remaining===0?'disabled':''}><span class="dot"></span>${ctaText}</button>
+
+    <section class="lace book">
+      <h2>每月戳記 <small>${c.nextUp ? '下一期 '+ymDisp(c.nextUp) : ''}</small></h2>
+      <div class="stats">
+        <div class="chip sage"><b>${fmt(c.paid)}</b><span>已還金額</span></div>
+        <div class="chip rose"><b>${doneCount}${c.periods?' / '+c.periods:''}</b><span>已還期數</span></div>
+        <div class="chip mustard"><b>${S.monthly ? fmt(S.monthly) : '不固定'}</b><span>每月</span></div>
       </div>
-    </div>
-    <div class="book">
-      <div class="card">
-        <div class="stats">
-          <div><b>${fmt(c.paid)}</b><span>已還金額</span></div>
-          <div><b>${doneCount}${c.periods?' / '+c.periods:''}</b><span>已還期數</span></div>
-          <div><b>${S.monthly ? fmt(S.monthly) : '—'}</b><span>每月</span></div>
-        </div>
-        <h2>每月戳記 <small>${c.nextUp ? '下一期 '+ymDisp(c.nextUp) : ''}</small></h2>
-        <div class="grid">${grid}</div>
-        ${hidden ? `<button class="more" id="btnMore">還有 ${hidden} 期未到，全部展開</button>` : (showAll && c.months.length>6 ? `<button class="more" id="btnMore">收起未到的月份</button>` : '')}
-        <div class="legend">
-          <span><i style="background:var(--green)"></i>已還</span>
-          <span><i style="background:var(--amber)"></i>本月待還</span>
-          <span><i style="background:var(--red)"></i>未還</span>
-          <span><i style="border:1.5px dashed var(--ink-3)"></i>未到</span>
-        </div>
-        <h2>流水帳 <small>${R.length ? R.length+' 筆' : ''}</small></h2>
-        <div class="ledger">${ledger}</div>
+      <div class="grid">${grid}</div>
+      ${hidden ? `<button class="more" id="btnMore">還有 ${hidden} 期未到，全部展開</button>` : (showAll && c.months.length>6 ? `<button class="more" id="btnMore">收起未到的月份</button>` : '')}
+      <div class="legend">
+        <span><i style="background:var(--sage)"></i>已還</span>
+        <span><i style="background:var(--mustard)"></i>待打卡</span>
+        <span><i style="border:1.5px dashed var(--ink-3)"></i>未到</span>
       </div>
-      <button class="share-btn" id="btnShareAny">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-        把目前進度傳給${escape(S.lender)}
-      </button>
-      <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>
-    </div>`;
+    </section>
+
+    <section class="lace ledgerCard">
+      <h2>流水帳 <small>${R.length ? R.length+' 筆' : ''}</small></h2>
+      ${ledger}
+    </section>
+
+    <button class="share-btn" id="btnShareAny">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+      把目前進度傳給${escape(S.lender)}
+    </button>
+    <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>`;
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
   document.querySelectorAll('.slot button').forEach(b=> b.onclick = ()=> openSheet(b.dataset.ym, c));
+  const cta = $('#btnCta'); if(cta && c.nextUp) cta.onclick = ()=> openSheet(c.nextUp, c);
   const more = $('#btnMore'); if(more) more.onclick = ()=>{ showAll = !showAll; render(); };
   $('#btnShareAny').onclick = ()=> openShare(null, c);
   justStamped = null;
@@ -331,7 +353,7 @@ function openSheet(ym, c){
   const owed = S.monthly ? Math.max(S.monthly - (c.byPeriod[ym]||0), 0) : '';
   $('#fAmount').value = owed || '';
   $('#fNote').value = ''; $('#fPin').value = ''; $('#fErr').textContent = '';
-  $('#sheetTitle').textContent = `${ymDisp(ym)} 這期還了多少？`;
+  $('#sheetTitle').textContent = `${ymDisp(ym)} 這期匯了多少？`;
   $('#mask').classList.add('open');
   setTimeout(()=> $('#fAmount').focus(), 50);
 }
@@ -361,7 +383,7 @@ $('#btnGo').onclick = async ()=>{
     setTimeout(()=> openShare({period: body.period, amount: body.amount}, compute()), 800);
   }catch(err){
     $('#fErr').textContent = String(err.message||err);
-  }finally{ btn.disabled=false; btn.textContent='蓋章'; }
+  }finally{ btn.disabled=false; btn.textContent='蓋章打卡'; }
 };
 
 /* ── 傳給爸爸 ── */
