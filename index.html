@@ -137,6 +137,8 @@
   .share-btn svg{width:20px;height:20px}
   .foot{margin-top:14px;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;padding:0 4px}
   .foot a{color:var(--ink-3)}
+  .copy{margin-top:26px;text-align:center;font-size:11px;color:var(--ink-3);line-height:1.8;letter-spacing:.04em}
+  .copy b{font-weight:700;color:var(--ink-2)}
 
   /* ── 抽屜 ── */
   .mask{position:fixed;inset:0;background:rgba(43,50,56,.5);display:none;align-items:flex-end;justify-content:center;z-index:9}
@@ -361,7 +363,8 @@ function render(){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
       把目前進度傳給${escape(S.lender)}
     </button>
-    <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>`;
+    <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>
+    <div class="copy">© ${new Date().getFullYear()} <b>${escape(S.borrower||'')}</b>　還款卡<br>僅供對帳使用，內容不作為任何法律文件</div>`;
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
   const simEl = $('#sim');
