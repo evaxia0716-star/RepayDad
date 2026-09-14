@@ -65,7 +65,8 @@
   .bar i{display:block;height:100%;background:var(--rose);width:0;border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
   .barlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:8px;font-variant-numeric:tabular-nums}
   /* 多還試算 */
-  .sim{margin-top:18px;padding-top:14px;border-top:1px dashed rgba(168,83,81,.35)}
+  .simToggle{margin-top:14px;border:0;background:transparent;color:var(--rose-deep);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline dotted;text-underline-offset:3px}
+  .sim{margin-top:12px;padding-top:14px;border-top:1px dashed rgba(168,83,81,.35)}
   .sim .t{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
   .sim .t b{color:var(--rose-deep);font-variant-numeric:tabular-nums}
   .sim input[type=range]{width:100%;margin:8px 0 4px;accent-color:var(--rose)}
@@ -212,7 +213,7 @@ const PAGE_URL = location.origin + location.pathname;
 
 const $ = s => document.querySelector(s);
 const fmt = n => Number(n).toLocaleString('zh-TW');
-let S = null, R = [], justStamped = null, showAll = false, simVal = null, chartTab = 'month';
+let S = null, R = [], justStamped = null, showAll = false, simVal = null, chartTab = 'month', simOpen = false;
 
 function ymNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function ymdNow(){ const d=new Date(); return ymNow()+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -322,8 +323,9 @@ function render(){
       <div class="sub">${c.finishMonth ? `照目前進度，預計 ${ymDisp(c.finishMonth)} 還清` : '每次匯款後打卡，餘額自動更新'}</div>
       <div class="bar"><i id="bar"></i></div>
       <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
-      ${c.remaining>0 ? `<div class="sim">
-        <div class="t"><span>試算：每月還</span><b id="simLabel"></b></div>
+      ${c.remaining>0 ? `<button class="simToggle" id="simToggle">${simOpen?'Collapse':'Expand'}</button>` : ''}
+      ${c.remaining>0 && simOpen ? `<div class="sim">
+        <div class="t"><span>每月還</span><b id="simLabel"></b></div>
         <input type="range" id="sim" min="${sim.min}" max="${sim.max}" step="1000" value="${sim.val}">
         <div class="r" id="simOut"></div>
       </div>` : ''}
@@ -364,9 +366,10 @@ function render(){
       把目前進度傳給${escape(S.lender)}
     </button>
     <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>
-    <div class="copy">© ${new Date().getFullYear()} <b>${escape(S.borrower||'')}</b>　還款卡<br>僅供對帳使用，內容不作為任何法律文件</div>`;
+    <div class="copy">© ${new Date().getFullYear()} <b>${escape(S.borrower||'')}</b>　還款卡<br>僅供家人對帳使用，內容不作為任何法律文件</div>`;
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
+  const st = $('#simToggle'); if(st) st.onclick = ()=>{ simOpen = !simOpen; render(); };
   const simEl = $('#sim');
   if(simEl){
     const upd = ()=>{
