@@ -64,6 +64,13 @@
   .bar{height:10px;background:rgba(255,255,255,.7);border-radius:999px;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--rose);width:0;border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
   .barlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:8px;font-variant-numeric:tabular-nums}
+  /* 多還試算 */
+  .sim{margin-top:18px;padding-top:14px;border-top:1px dashed rgba(168,83,81,.35)}
+  .sim .t{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
+  .sim .t b{color:var(--rose-deep);font-variant-numeric:tabular-nums}
+  .sim input[type=range]{width:100%;margin:8px 0 4px;accent-color:var(--rose)}
+  .sim .r{font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .sim .r b{color:var(--rose-deep)}
   .paidoff{position:absolute;right:22px;top:26px;border:3px solid var(--rose-deep);color:var(--rose-deep);padding:5px 12px;font-weight:900;font-size:20px;transform:rotate(-10deg);border-radius:8px;letter-spacing:.14em}
 
   /* ── 戳記卡 ── */
@@ -114,6 +121,14 @@
   .row .n{color:var(--ink-2);font-size:12px;line-height:1.4;word-break:break-all}
   .row .a{font-weight:700;color:var(--sage)}
   .row .bal{color:var(--ink);font-weight:500}
+  /* ── 數據卡 ── */
+  .chartCard{padding:28px 16px 24px}
+  .tabs{display:flex;gap:6px;padding:8px 4px 14px}
+  .tabs button{flex:1;border:1.5px solid var(--grid);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:8px 0;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chart{width:100%;height:auto;display:block}
+  .chart text{font-family:"Noto Sans TC",sans-serif}
+  .chartNote{font-size:12px;color:var(--ink-2);padding:10px 4px 0;line-height:1.6}
   .empty{padding:22px 20px;color:var(--ink-2);font-size:14px;text-align:center;line-height:1.7}
 
   /* ── 傳給爸爸 ── */
@@ -187,13 +202,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxqJpP9YfEN9EXahWyMVqOilKjCB2B4DGpw1QBWknIp72zsjHDEZRc98PuKUnJqg2vkjg/exec';
+/* ═══════════ 只需要改這一行 ═══════════ */
+const API_URL = '請貼上 Apps Script 網頁應用程式網址';
+/* ═════════════════════════════════════ */
 
 const PAGE_URL = location.origin + location.pathname;
 
 const $ = s => document.querySelector(s);
 const fmt = n => Number(n).toLocaleString('zh-TW');
-let S = null, R = [], justStamped = null, showAll = false;
+let S = null, R = [], justStamped = null, showAll = false, simVal = null, chartTab = 'month';
 
 function ymNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function ymdNow(){ const d=new Date(); return ymNow()+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -288,6 +305,11 @@ function render(){
          <span class="a">${fmt(r.amount)}</span><span class="bal">${fmt(r.bal)}</span></div>`).join('')
     : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，點上面 ${ymDisp(c.nextUp||'')} 的圈圈蓋第一個章。</div>`;
 
+  // 多還試算：預設值＝每月應還，沒有就用過去平均，再沒有就 15,000
+  const avg = R.length ? Math.round(c.paid / new Set(R.map(r=>r.period)).size / 1000) * 1000 : 0;
+  const base = S.monthly || avg || 15000;
+  const sim = { min: 5000, max: Math.max(50000, Math.ceil(base/1000)*1000*2), val: simVal || base };
+
   $('#app').innerHTML = `
     <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
 
@@ -298,6 +320,11 @@ function render(){
       <div class="sub">${c.finishMonth ? `照目前進度，預計 ${ymDisp(c.finishMonth)} 還清` : '每次匯款後打卡，餘額自動更新'}</div>
       <div class="bar"><i id="bar"></i></div>
       <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
+      ${c.remaining>0 ? `<div class="sim">
+        <div class="t"><span>試算：每月還</span><b id="simLabel"></b></div>
+        <input type="range" id="sim" min="${sim.min}" max="${sim.max}" step="1000" value="${sim.val}">
+        <div class="r" id="simOut"></div>
+      </div>` : ''}
     </section></div>
 
     <div class="sh"><section class="lace book">
@@ -320,6 +347,16 @@ function render(){
       ${ledger}
     </section></div>
 
+    <div class="sh"><section class="lace chartCard">
+      <h2>數據 <small>點上方切換</small></h2>
+      <div class="tabs">
+        <button data-tab="month" class="${chartTab==='month'?'on':''}">每月還款</button>
+        <button data-tab="cum" class="${chartTab==='cum'?'on':''}">累積進度</button>
+        <button data-tab="year" class="${chartTab==='year'?'on':''}">年度合計</button>
+      </div>
+      ${drawChart(chartTab, c)}
+    </section></div>
+
     <button class="share-btn" id="btnShareAny">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
       把目前進度傳給${escape(S.lender)}
@@ -327,7 +364,21 @@ function render(){
     <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>`;
 
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
+  const simEl = $('#sim');
+  if(simEl){
+    const upd = ()=>{
+      const v = Number(simEl.value); simVal = v;
+      const n = Math.ceil(c.remaining / v);
+      const from = c.nextUp || ymNow();
+      const fin = addMonths(from, n-1);
+      const baseN = S.monthly ? Math.ceil(c.remaining / S.monthly) : null;
+      $('#simLabel').textContent = fmt(v) + ' 元';
+      $('#simOut').innerHTML = `再 <b>${n}</b> 期，<b>${ymDisp(fin)}</b> 還清` + (baseN && baseN!==n ? `（比每月 ${fmt(S.monthly)} ${n<baseN?'提早':'晚'} ${Math.abs(baseN-n)} 期）` : '');
+    };
+    simEl.oninput = upd; upd();
+  }
   document.querySelectorAll('.slot.tap').forEach(el=> el.onclick = ()=> openSheet(el.dataset.ym, c));
+  document.querySelectorAll('.tabs button').forEach(b=> b.onclick = ()=>{ chartTab = b.dataset.tab; render(); });
   const more = $('#btnMore'); if(more) more.onclick = ()=>{ showAll = !showAll; render(); };
   $('#btnShareAny').onclick = ()=> openShare(null, c);
   justStamped = null;
@@ -405,6 +456,66 @@ $('#btnCopy').onclick = async ()=>{
   try{ await navigator.clipboard.writeText(ta.value); }catch(_){ ta.select(); document.execCommand('copy'); }
   toast('已複製，到 LINE 貼上就好');
 };
+
+/* ── 數據圖（純 SVG，不用外掛） ── */
+function drawChart(tab, c){
+  const W=520, H=260, L=54, Rm=14, T=18, B=44;
+  const iw=W-L-Rm, ih=H-T-B;
+  const k = n => n>=10000 ? (n/10000).toFixed(n%10000?1:0)+'萬' : fmt(n);
+  const axis = (max, ticks=4) => { let out=''; for(let i=0;i<=ticks;i++){ const v=max*i/ticks, y=T+ih-ih*i/ticks; out+=`<line x1="${L}" x2="${W-Rm}" y1="${y}" y2="${y}" stroke="#E6DCC4" stroke-width="1"/><text x="${L-6}" y="${y+4}" font-size="10" fill="#A3A6A8" text-anchor="end">${k(v)}</text>`; } return out; };
+  const svg = inner => `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  const empty = svg(`<text x="${W/2}" y="${H/2}" font-size="13" fill="#A3A6A8" text-anchor="middle">還沒有資料，蓋第一個章後就會出現</text>`);
+
+  if(tab==='month'){
+    // 從起始月到現在（或最後一筆），每月還了多少；多還的月份用玫瑰色標記
+    const months = c.months.filter(ym => ymCmp(ym, c.now)<=0 || (c.byPeriod[ym]||0)>0);
+    if(!R.length) return empty;
+    const vals = months.map(ym=>c.byPeriod[ym]||0);
+    const max = Math.max(...vals, S.monthly||0, 1);
+    const bw = Math.min(34, iw/months.length*0.6), gap = iw/months.length;
+    let bars='';
+    months.forEach((ym,i)=>{
+      const v=vals[i], h=ih*v/max, x=L+gap*i+(gap-bw)/2, y=T+ih-h;
+      const col = v===0 ? '#E6DCC4' : (S.monthly && v>S.monthly ? '#C9706C' : '#5F8C74');
+      bars += `<rect x="${x}" y="${v?y:T+ih-3}" width="${bw}" height="${v?h:3}" rx="4" fill="${col}"/>`;
+      if(v) bars += `<text x="${x+bw/2}" y="${y-5}" font-size="10" fill="#2B3238" text-anchor="middle">${k(v)}</text>`;
+      if(months.length<=8 || i%Math.ceil(months.length/8)===0) bars += `<text x="${x+bw/2}" y="${H-B+16}" font-size="10" fill="#6B6F72" text-anchor="middle">${ym.slice(2).replace('-','/')}</text>`;
+    });
+    const ref = S.monthly ? `<line x1="${L}" x2="${W-Rm}" y1="${T+ih-ih*S.monthly/max}" y2="${T+ih-ih*S.monthly/max}" stroke="#D39B2E" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${L+4}" y="${T+ih-ih*S.monthly/max+12}" font-size="10" fill="#D39B2E">每月 ${fmt(S.monthly)}</text>` : '';
+    const avg = Math.round(c.paid / Math.max(1, months.filter(m=>(c.byPeriod[m]||0)>0).length));
+    return svg(axis(max)+ref+bars) + `<div class="chartNote">綠色是當月還款，${S.monthly?'超過每月應還的用玫瑰色，':''}灰色是那個月沒還。有還款的月份平均 <b>${fmt(avg)}</b> 元。</div>`;
+  }
+
+  if(tab==='cum'){
+    if(!R.length) return empty;
+    const months = c.months.filter(ym => ymCmp(ym, c.now)<=0 || (c.byPeriod[ym]||0)>0);
+    let acc=0; const pts = months.map((ym,i)=>{ acc += c.byPeriod[ym]||0; return {ym, paid:acc, left:S.total-acc}; });
+    const max = S.total || 1, gap = iw/Math.max(1, months.length-1);
+    const X = i => months.length===1 ? L+iw/2 : L+gap*i;
+    const Y = v => T+ih-ih*Math.min(v,max)/max;
+    const path = key => pts.map((p,i)=>`${i?'L':'M'}${X(i)},${Y(p[key])}`).join(' ');
+    const area = `M${X(0)},${T+ih} ` + pts.map((p,i)=>`L${X(i)},${Y(p.paid)}`).join(' ') + ` L${X(pts.length-1)},${T+ih} Z`;
+    let labels='';
+    months.forEach((ym,i)=>{ if(months.length<=8 || i%Math.ceil(months.length/8)===0 || i===months.length-1) labels+=`<text x="${X(i)}" y="${H-B+16}" font-size="10" fill="#6B6F72" text-anchor="middle">${ym.slice(2).replace('-','/')}</text>`; });
+    const last = pts[pts.length-1];
+    const dots = `<circle cx="${X(pts.length-1)}" cy="${Y(last.paid)}" r="4" fill="#5F8C74"/><circle cx="${X(pts.length-1)}" cy="${Y(last.left)}" r="4" fill="#C9706C"/>`;
+    const leg = `<text x="${L+iw/2-30}" y="${T+ih+12+18}" font-size="10" fill="#5F8C74" text-anchor="end">— 已還</text><text x="${L+iw/2+30}" y="${T+ih+12+18}" font-size="10" fill="#C9706C" text-anchor="start">— 剩餘</text>`;
+    const proj = (c.finishMonth && S.monthly) ? `<div class="chartNote">兩條線交會的那個月，就是還了一半的時候；照每月 ${fmt(S.monthly)} 走，預計 <b>${ymDisp(c.finishMonth)}</b> 剩餘歸零。</div>` : `<div class="chartNote">綠線往上、玫瑰線往下，交會時就是還了一半。</div>`;
+    return svg(axis(max)+`<path d="${area}" fill="#5F8C74" opacity=".12"/><path d="${path('paid')}" fill="none" stroke="#5F8C74" stroke-width="2.5"/><path d="${path('left')}" fill="none" stroke="#C9706C" stroke-width="2.5"/>`+dots+labels+leg) + proj;
+  }
+
+  // year
+  if(!R.length) return empty;
+  const byYear = {}; R.forEach(r=>{ const y=r.period.slice(0,4); byYear[y]=(byYear[y]||0)+r.amount; });
+  const years = Object.keys(byYear).sort();
+  const cnt = {}; R.forEach(r=>{ const y=r.period.slice(0,4); (cnt[y]=cnt[y]||new Set()).add(r.period); });
+  const max = Math.max(...years.map(y=>byYear[y]), 1);
+  const gap = iw/years.length, bw = Math.min(90, gap*0.55);
+  let bars='';
+  years.forEach((y,i)=>{ const v=byYear[y], h=ih*v/max, x=L+gap*i+(gap-bw)/2, yy=T+ih-h;
+    bars += `<rect x="${x}" y="${yy}" width="${bw}" height="${h}" rx="6" fill="#5F8C74"/><text x="${x+bw/2}" y="${yy-6}" font-size="11" font-weight="700" fill="#2B3238" text-anchor="middle">${fmt(v)}</text><text x="${x+bw/2}" y="${H-B+16}" font-size="11" fill="#6B6F72" text-anchor="middle">${y} 年</text><text x="${x+bw/2}" y="${H-B+30}" font-size="10" fill="#A3A6A8" text-anchor="middle">${cnt[y].size} 期</text>`; });
+  return svg(axis(max)+bars) + `<div class="chartNote">每年還了多少、幾期。年份會隨紀錄自動增加。</div>`;
+}
 
 let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),3200); }
 function escape(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
