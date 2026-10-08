@@ -42,6 +42,11 @@
   .top h1{margin:0;font-family:"Noto Serif TC",serif;font-size:26px;font-weight:900;letter-spacing:.12em;color:var(--rose-deep)}
   .top .who{font-size:13px;color:var(--ink-2);background:var(--card);border:1px solid var(--grid);padding:4px 12px;border-radius:999px}
 
+  /* ── 同步狀態（小字） ── */
+  .sync{font-size:11px;color:var(--ink-3);text-align:right;margin:-8px 6px 10px;min-height:14px}
+  .sync.busy{color:var(--mustard)}
+  .sync.bad{color:var(--rose-deep)}
+
   /* ── 卡片：郵票鋸齒邊（用遮罩把上下邊緣剪成半圓） ── */
   .sh{margin-top:20px;filter:drop-shadow(0 6px 12px rgba(120,80,60,.13)) drop-shadow(0 1px 1px rgba(0,0,0,.05))}
   .sh:first-of-type{margin-top:0}
@@ -96,6 +101,7 @@
   .slot.done .ring{border:0;background:var(--sage);color:#fff;transform:rotate(-8deg);
     box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--sage),0 4px 10px rgba(95,140,116,.35)}
   .slot.done .ring.pop{animation:stamp .55s cubic-bezier(.2,1.5,.4,1) both}
+  .slot.pending .ring{opacity:.75}
   @keyframes stamp{from{transform:scale(2.4) rotate(-8deg);opacity:0}to{transform:scale(1) rotate(-8deg);opacity:1}}
   @keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(211,155,46,.35)}50%{box-shadow:0 0 0 8px rgba(211,155,46,0)}}
   .slot .amt{font-size:13px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums;min-height:18px;color:var(--ink-3)}
@@ -122,6 +128,7 @@
   .row .n{color:var(--ink-2);font-size:12px;line-height:1.4;word-break:break-all}
   .row .a{font-weight:700;color:var(--sage)}
   .row .bal{color:var(--ink);font-weight:500}
+  .row.pending{opacity:.6}
   /* ── 數據卡 ── */
   .chartCard{padding:28px 16px 24px}
   .tabs{display:flex;gap:6px;padding:8px 4px 14px}
@@ -210,10 +217,12 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxqJpP9YfEN9EXahWyMVqOi
 /* ═════════════════════════════════════ */
 
 const PAGE_URL = location.origin + location.pathname;
+const CACHE_KEY = 'repaycard-cache-v1';   // 手機裡存一份上次的資料，開頁秒出
 
 const $ = s => document.querySelector(s);
 const fmt = n => Number(n).toLocaleString('zh-TW');
 let S = null, R = [], justStamped = null, showAll = false, simVal = null, chartTab = 'month', simOpen = false;
+let syncState = '';   // '' | 'busy' | 'bad' | 文字訊息
 
 function ymNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function ymdNow(){ const d=new Date(); return ymNow()+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -221,16 +230,48 @@ function addMonths(ym,n){ const [y,m]=ym.split('-').map(Number); const d=new Dat
 function ymCmp(a,b){ return a<b?-1:a>b?1:0; }
 function ymDisp(ym){ return ym.replace('-','/'); }
 
+/* ── 快取：先讀手機裡的，再去抓最新的 ── */
+function readCache(){
+  try{ const j = JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(j && j.settings && Array.isArray(j.records)) return j; }catch(_){}
+  return null;
+}
+function writeCache(){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({settings:S, records:R, at:Date.now()})); }catch(_){}
+}
+function setSync(state, text){
+  syncState = state;
+  const el = $('#sync'); if(!el) return;
+  el.className = 'sync' + (state==='busy'?' busy':state==='bad'?' bad':'');
+  el.textContent = text || '';
+}
+
+async function fetchAll(){
+  const res = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now(), {cache:'no-store'});
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error||'讀取失敗');
+  return data;
+}
+
 async function load(){
-  try{
-    const res = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now(), {cache:'no-store'});
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error||'讀取失敗');
-    S = data.settings; R = data.records;
+  const cached = readCache();
+  if(cached){
+    S = cached.settings; R = cached.records;
     render();
+    setSync('busy','同步中…');
+  }
+  try{
+    const data = await fetchAll();
+    S = data.settings; R = data.records;
+    writeCache();
+    render();
+    setSync('', '');
   }catch(err){
-    $('#app').innerHTML = `<div class="loading">讀不到資料。<br><small>${escape(String(err.message||err))}</small><br><br>
-      <small>確認 index.html 裡的 API_URL 已換成 Apps Script 網址，且部署時「誰可以存取」選「所有人」。</small></div>`;
+    if(cached){
+      setSync('bad','無法連線，顯示的是上次的資料');
+    }else{
+      $('#app').innerHTML = `<div class="loading">讀不到資料。<br><small>${escape(String(err.message||err))}</small><br><br>
+        <small>確認 index.html 裡的 API_URL 已換成 Apps Script 網址，且部署時「誰可以存取」選「所有人」。</small></div>`;
+    }
   }
 }
 
@@ -280,6 +321,7 @@ function render(){
   const c = compute();
   const pct = S.total ? Math.min(100, c.paid/S.total*100) : 0;
   const doneCount = c.months.filter(ym=>status(ym,c.byPeriod[ym]||0,c.now)==='done').length;
+  const pendingPeriods = new Set(R.filter(r=>r.pending).map(r=>r.period));
 
   let futureSeen = 0, hidden = 0;
   const grid = c.months.map(ym=>{
@@ -289,7 +331,8 @@ function render(){
     const ringText = {done:'✓',partial:'半',due:'待打卡',future:'未到'}[st];
     const amt = sum>0 ? fmt(sum) : (S.monthly ? fmt(S.monthly) : '');
     const tap = c.remaining>0 && ym===c.nextUp;
-    return `<div class="slot ${st}${tap?' tap':''}" ${tap?`data-ym="${ym}" role="button" tabindex="0"`:''}>
+    const pend = pendingPeriods.has(ym) ? ' pending' : '';
+    return `<div class="slot ${st}${tap?' tap':''}${pend}" ${tap?`data-ym="${ym}" role="button" tabindex="0"`:''}>
       <div class="ym">${ymDisp(ym)}</div>
       <div class="ring${st==='done'&&justStamped===ym?' pop':''}">${ringText}</div>
       <div class="amt">${amt}</div>
@@ -297,14 +340,14 @@ function render(){
     </div>`;
   }).join('');
 
-  const asc = [...R].sort((a,b)=> (a.date+a.ts).localeCompare(b.date+b.ts));
+  const asc = [...R].sort((a,b)=> (a.date+(a.ts||'')).localeCompare(b.date+(b.ts||'')));
   let running = S.total;
   const rowsAsc = asc.map(r=>{ running -= r.amount; return {...r, bal: Math.max(running,0)}; });
   const ledger = rowsAsc.length
     ? `<div class="lhead"><span>日期</span><span>期別</span><span>還款</span><span>餘額</span></div>` +
       rowsAsc.reverse().map(r=>
-        `<div class="row"><span class="d">${r.date.slice(5).replace('-','/')}<br><small style="color:var(--ink-3)">${r.date.slice(0,4)}</small></span>
-         <span class="n">${ymDisp(r.period)}${r.note?'<br>'+escape(r.note):''}</span>
+        `<div class="row${r.pending?' pending':''}"><span class="d">${r.date.slice(5).replace('-','/')}<br><small style="color:var(--ink-3)">${r.date.slice(0,4)}</small></span>
+         <span class="n">${ymDisp(r.period)}${r.note?'<br>'+escape(r.note):''}${r.pending?'<br>同步中…':''}</span>
          <span class="a">${fmt(r.amount)}</span><span class="bal">${fmt(r.bal)}</span></div>`).join('')
     : `<div class="empty">還沒有任何一筆。<br>匯款給${escape(S.lender)}之後，點上面 ${ymDisp(c.nextUp||'')} 的圈圈蓋第一個章。</div>`;
 
@@ -315,6 +358,7 @@ function render(){
 
   $('#app').innerHTML = `
     <div class="top"><h1>還款卡</h1><span class="who">${escape(S.borrower||'')} → ${escape(S.lender)}</span></div>
+    <div class="sync" id="sync"></div>
 
     <div class="sh"><section class="lace cover">
       ${c.remaining===0 && S.total ? '<div class="paidoff">已還清</div>' : ''}
@@ -323,7 +367,7 @@ function render(){
       <div class="sub">${c.finishMonth ? `照目前進度，預計 ${ymDisp(c.finishMonth)} 還清` : '每次匯款後打卡，餘額自動更新'}</div>
       <div class="bar"><i id="bar"></i></div>
       <div class="barlabel"><span>已還 ${Math.round(pct)}%</span><span>總額 ${fmt(S.total)}</span></div>
-      ${c.remaining>0 ? `<button class="simToggle" id="simToggle">${simOpen?'Collapse':'Expand'}</button>` : ''}
+      ${c.remaining>0 ? `<button class="simToggle" id="simToggle">${simOpen?'收起試算':'多還試算'}</button>` : ''}
       ${c.remaining>0 && simOpen ? `<div class="sim">
         <div class="t"><span>每月還</span><b id="simLabel"></b></div>
         <input type="range" id="sim" min="${sim.min}" max="${sim.max}" step="1000" value="${sim.val}">
@@ -368,6 +412,9 @@ function render(){
     <div class="foot"><span>資料存在自己的 Google Sheet</span><a href="javascript:location.reload()">重新整理</a></div>
     <div class="copy">© ${new Date().getFullYear()} <b>${escape(S.borrower||'')}</b>　還款卡<br>僅供家人對帳使用，內容不作為任何法律文件</div>`;
 
+  // 重畫後把同步狀態字樣放回去
+  if(syncState==='busy') setSync('busy', $('#sync').textContent || '同步中…');
+
   requestAnimationFrame(()=>{ $('#bar').style.width = pct+'%'; });
   const st = $('#simToggle'); if(st) st.onclick = ()=>{ simOpen = !simOpen; render(); };
   const simEl = $('#sim');
@@ -406,7 +453,9 @@ function openSheet(ym, c){
 $('#btnX').onclick = ()=> $('#mask').classList.remove('open');
 $('#mask').onclick = e=>{ if(e.target.id==='mask') $('#mask').classList.remove('open'); };
 
+let posting = false;
 $('#btnGo').onclick = async ()=>{
+  if(posting) return;
   const body = {
     action:'checkin',
     pin: $('#fPin').value.trim(),
@@ -417,19 +466,42 @@ $('#btnGo').onclick = async ()=>{
   };
   if(!body.amount || body.amount<=0){ $('#fErr').textContent='請填金額'; return; }
   if(!body.pin){ $('#fErr').textContent='請輸入 PIN'; return; }
-  const btn = $('#btnGo'); btn.disabled = true; btn.textContent = '蓋章中…'; $('#fErr').textContent='';
+  if(!body.date){ $('#fErr').textContent='請選日期'; return; }
+
+  // 1) 先在畫面上蓋章（樂觀更新），不等 Google 回話
+  posting = true;
+  const temp = { date: body.date, period: body.period, amount: body.amount, note: body.note, ts: String(Date.now()), pending: true };
+  const before = R;
+  R = [...R, temp];
+  justStamped = body.period;
+  $('#mask').classList.remove('open');
+  render();
+  const c1 = compute();
+  toast(`已蓋章 ${fmt(body.amount)} 元，剩餘 ${fmt(c1.remaining)} 元`);
+  setSync('busy','正在寫進 Google Sheet…');
+  const shareTimer = setTimeout(()=> openShare({period: body.period, amount: body.amount}, compute()), 800);
+
+  // 2) 背景送去 Apps Script；成功就用正式資料覆蓋，失敗就把章拿掉
   try{
     const res = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'失敗');
-    R = data.records; justStamped = body.period;
-    $('#mask').classList.remove('open');
+    R = data.records;
+    writeCache();
     render();
-    toast(`已蓋章 ${fmt(body.amount)} 元，剩餘 ${fmt(data.remaining)} 元`);
-    setTimeout(()=> openShare({period: body.period, amount: body.amount}, compute()), 800);
+    setSync('', '');
   }catch(err){
-    $('#fErr').textContent = String(err.message||err);
-  }finally{ btn.disabled=false; btn.textContent='蓋章打卡'; }
+    clearTimeout(shareTimer);
+    $('#shareMask').classList.remove('open');
+    R = before;
+    render();
+    setSync('bad','這筆沒有寫進去');
+    // 把表單叫回來，資料幫她填好，只要重打 PIN
+    openSheet(body.period, compute());
+    $('#fDate').value = body.date; $('#fAmount').value = body.amount; $('#fNote').value = body.note;
+    $('#fErr').textContent = '寫入失敗：' + String(err.message||err) + '（請再試一次）';
+    toast('打卡沒成功，已把章拿掉');
+  }finally{ posting = false; }
 };
 
 /* ── 傳給媽媽── */
