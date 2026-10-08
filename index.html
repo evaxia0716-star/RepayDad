@@ -217,7 +217,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxqJpP9YfEN9EXahWyMVqOi
 /* ═════════════════════════════════════ */
 
 const PAGE_URL = location.origin + location.pathname;
-const CACHE_KEY = 'repaycard-cache-v1';   // 手機裡存一份上次的資料，開頁秒出
+const CACHE_KEY = 'repaycard-cache-v2';   // 手機裡存一份上次的資料，開頁秒出
 
 const $ = s => document.querySelector(s);
 const fmt = n => Number(n).toLocaleString('zh-TW');
@@ -229,6 +229,21 @@ function ymdNow(){ const d=new Date(); return ymNow()+'-'+String(d.getDate()).pa
 function addMonths(ym,n){ const [y,m]=ym.split('-').map(Number); const d=new Date(y,m-1+n,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function ymCmp(a,b){ return a<b?-1:a>b?1:0; }
 function ymDisp(ym){ return ym.replace('-','/'); }
+// 期別保險：不是 YYYY-MM 的一律整理，整理不出來就用還款日期的年月
+function fixYm(v, fallbackDate){
+  const str = String(v||'').trim();
+  const m = str.match(/(\d{4})[\/\-\.年]\s*(\d{1,2})/);
+  if(m) return m[1]+'-'+m[2].padStart(2,'0');
+  const d = new Date(str);
+  if(!isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  return String(fallbackDate||'').slice(0,7) || ymNow();
+}
+function cleanRecords(list){
+  return (list||[]).map(r=>{
+    const date = String(r.date||'').slice(0,10);
+    return {...r, date, amount:Number(r.amount)||0, period: fixYm(r.period, date)};
+  }).filter(r=>r.amount>0);
+}
 
 /* ── 快取：先讀手機裡的，再去抓最新的 ── */
 function readCache(){
@@ -255,13 +270,13 @@ async function fetchAll(){
 async function load(){
   const cached = readCache();
   if(cached){
-    S = cached.settings; R = cached.records;
+    S = cached.settings; R = cleanRecords(cached.records);
     render();
     setSync('busy','同步中…');
   }
   try{
     const data = await fetchAll();
-    S = data.settings; R = data.records;
+    S = data.settings; R = cleanRecords(data.records);
     writeCache();
     render();
     setSync('', '');
@@ -299,8 +314,9 @@ function compute(){
     end = addMonths(end,1);
   }
 
+  // 保險：最多 600 個月（50 年），絕不讓迴圈跑到當機
   const months=[];
-  for(let ym=start; ymCmp(ym,end)<=0; ym=addMonths(ym,1)) months.push(ym);
+  for(let ym=start, i=0; ymCmp(ym,end)<=0 && i<600; ym=addMonths(ym,1), i++) months.push(ym);
   const nextUp = remaining>0 ? firstUnpaid(start,end,byPeriod) : null;
   return {paid,remaining,byPeriod,months,periods,finishMonth,now,nextUp};
 }
@@ -486,7 +502,7 @@ $('#btnGo').onclick = async ()=>{
     const res = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'失敗');
-    R = data.records;
+    R = cleanRecords(data.records);
     writeCache();
     render();
     setSync('', '');
